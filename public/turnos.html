@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Agenda de turnos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page page--narrow">
+    <a class="back" href="index.html" id="back"></a>
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Agenda de turnos</h1>
+        <p class="page-sub" id="sub"></p>
+      </div>
+      <button class="btn btn--green" type="button" id="nuevo"></button>
+    </div>
+
+    <section class="panel hidden" id="pSolicitudes">
+      <div class="panel__head"><h2 class="panel__title" id="tSolicitudes"></h2></div>
+      <div class="list" id="solicitudes"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head" style="flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="icon-btn" id="prev" aria-label="Semana anterior"></button>
+          <button class="btn btn--ghost btn--sm" id="hoy">Hoy</button>
+          <button class="icon-btn" id="next" aria-label="Semana siguiente"></button>
+          <strong id="mes" style="margin-left:8px;color:var(--blue-700)"></strong>
+        </div>
+        <label class="field" style="min-width:220px"><select id="vet" aria-label="Profesional"><option value="">Todos los profesionales</option></select></label>
+      </div>
+      <div class="week" id="week"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title" id="tDia"></h2><span class="panel__count" id="nDia"></span></div>
+      <div id="dia"></div>
+    </section>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/turnos.js"></script>
+</body>
+</html>

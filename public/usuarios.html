@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Equipo y clínica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page page--narrow">
+    <a class="back" href="index.html" id="back"></a>
+    <div class="page-head">
+      <div><h1 class="page-title">Equipo y clínica</h1><p class="page-sub">Usuarios, roles y datos que figuran en recetas y libretas.</p></div>
+      <button class="btn btn--green" id="nuevo" type="button"></button>
+    </div>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title" id="tEquipo"></h2></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Matrícula</th><th>Estado</th><th></th></tr></thead><tbody id="equipo"></tbody></table></div>
+      <p class="muted" style="font-size:12.5px;margin:14px 0 0;line-height:1.6">
+        <b>Director:</b> todo, más equipo y reportes · <b>Veterinario/a:</b> historia clínica, vacunas, recetas y turnos ·
+        <b>Recepción:</b> tutores, animales, turnos y libreta (sin notas clínicas) · <b>Tutor:</b> se habilita desde la ficha del animal.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title" id="tClinica"></h2></div>
+      <form id="fClinica" class="form-grid" novalidate>
+        <label class="field span-all"><span>Nombre de la veterinaria *</span><input name="nombre" required /></label>
+        <label class="field"><span>Dirección</span><input name="direccion" /></label>
+        <label class="field"><span>Ciudad</span><input name="ciudad" /></label>
+        <label class="field"><span>Provincia</span><input name="provincia" /></label>
+        <label class="field"><span>Teléfono</span><input name="telefono" /></label>
+        <label class="field"><span>Email</span><input name="email" type="email" /></label>
+        <label class="field"><span>CUIT</span><input name="cuit" /></label>
+        <div class="span-all form-error" role="alert"></div>
+        <div class="span-all form-actions" style="margin-top:0"><button class="btn">Guardar datos</button></div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel__head"><h2 class="panel__title" id="tBackup"></h2></div>
+      <p class="muted" style="margin:0 0 14px;line-height:1.6">Descargá una copia completa de la base (pacientes, historias clínicas, turnos y usuarios).
+        Guardala fuera de esta computadora, por ejemplo en un pendrive o en la nube. Se recomienda hacerlo al menos una vez por semana.</p>
+      <a class="btn btn--ghost" href="/api/backup" id="backup"></a>
+    </section>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, $$, api, modal, close, toast, onSubmit, opciones, confirmar, ROLES } = HV;
+      const me = await HV.init({ roles: ["director"] });
+      $("#back").innerHTML = `${icon("back")}Inicio`;
+      $("#nuevo").innerHTML = `${icon("userPlus")}Nuevo usuario`;
+      $("#tEquipo").innerHTML = `${icon("users")}Equipo`;
+      $("#tClinica").innerHTML = `${icon("building")}Datos de la clínica`;
+      $("#tBackup").innerHTML = `${icon("download")}Copia de seguridad`;
+      $("#backup").innerHTML = `${icon("download")}Descargar copia de seguridad`;
+
+      function mostrarClave(titulo, email, clave) {
+        const m = modal({ title: titulo, body: `<p style="margin:0 0 10px">Clave temporal para <b>${esc(email)}</b> (se muestra una sola vez):</p>
+          <div class="secret"><span>${esc(clave)}</span><button class="btn btn--sm btn--ghost" type="button" data-copy>Copiar</button></div>
+          <p class="muted" style="font-size:12.5px">Pedile que la cambie desde el menú al ingresar.</p>
+          <div class="form-actions"><button class="btn" type="button" data-close>Listo</button></div>` });
+        $("[data-copy]", m).addEventListener("click", () => navigator.clipboard?.writeText(clave).then(() => toast("Clave copiada", "ok")));
+      }
+
+      async function cargar() {
+        const us = await api("GET", "/api/usuarios");
+        $("#equipo").innerHTML = us.map((u) => `<tr>
+          <td><b>${esc(u.apellido)}, ${esc(u.nombre)}</b>${u.id === me.id ? ' <span class="tag tag--info">Vos</span>' : ""}</td>
+          <td>${esc(u.email)}</td><td>${esc(ROLES[u.rol])}</td><td>${esc(u.matricula || "—")}</td>
+          <td>${u.activo ? '<span class="tag tag--ok">Activo</span>' : '<span class="tag">Inactivo</span>'}</td>
+          <td class="nowrap" style="text-align:right">
+            <a class="icon-btn" href="perfil.html${u.id === me.id ? "" : "?id=" + u.id}" title="Perfil completo y documentos" aria-label="Perfil completo">${icon("users")}</a>
+            <button class="icon-btn" data-edit="${u.id}" title="Editar rol y estado" aria-label="Editar">${icon("edit")}</button>
+            <button class="icon-btn" data-clave="${u.id}" title="Nueva clave" aria-label="Nueva clave">${icon("key")}</button></td></tr>`).join("");
+        $$("[data-edit]").forEach((b) => b.addEventListener("click", () => editar(us.find((u) => u.id === Number(b.dataset.edit)))));
+        $$("[data-clave]").forEach((b) => b.addEventListener("click", async () => {
+          const u = us.find((x) => x.id === Number(b.dataset.clave));
+          if (!(await confirmar(`¿Generar una nueva clave para ${u.nombre} ${u.apellido}? La actual deja de funcionar.`, { ok: "Generar" }))) return;
+          const r = await api("POST", `/api/usuarios/${u.id}/clave`, {});
+          mostrarClave("Nueva clave", u.email, r.clave);
+        }));
+      }
+
+      function editar(u = null) {
+        const m = modal({
+          title: u ? "Editar usuario" : "Nuevo usuario",
+          body: `<form class="form-grid" novalidate>
+            <label class="field"><span>Nombre *</span><input name="nombre" required value="${esc(u?.nombre)}" /></label>
+            <label class="field"><span>Apellido *</span><input name="apellido" required value="${esc(u?.apellido)}" /></label>
+            <label class="field span-all"><span>Email *</span><input name="email" type="email" required value="${esc(u?.email)}" /></label>
+            <label class="field"><span>Rol *</span><select name="rol">${opciones([["veterinario", "Veterinario/a"], ["recepcion", "Recepción"], ["director", "Director"]], u?.rol || "veterinario")}</select></label>
+            <label class="field"><span>Matrícula profesional</span><input name="matricula" value="${esc(u?.matricula)}" placeholder="MP 0000" /><small>Obligatoria para veterinarios.</small></label>
+            ${u ? `<label class="check span-all"><input type="checkbox" name="activo" ${u.activo ? "checked" : ""} />Usuario activo</label>` : ""}
+            <div class="span-all form-error" role="alert"></div>
+            <div class="span-all form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button class="btn">${icon("check")}Guardar</button></div>
+          </form>`,
+        });
+        onSubmit($("form", m), async (d) => {
+          if (u) { await api("PUT", `/api/usuarios/${u.id}`, d); close(m); toast("Usuario actualizado", "ok"); }
+          else { const r = await api("POST", "/api/usuarios", d); close(m); mostrarClave("Usuario creado", d.email, r.clave); }
+          cargar();
+        });
+      }
+
+      $("#nuevo").addEventListener("click", () => editar());
+
+      const c = await api("GET", "/api/clinica");
+      for (const [k, v] of Object.entries(c)) { const el = $(`#fClinica [name=${k}]`); if (el) el.value = v ?? ""; }
+      onSubmit($("#fClinica"), async (d) => { await api("PUT", "/api/clinica", d); toast("Datos de la clínica guardados", "ok"); });
+
+      cargar();
+    })();
+  </script>
+</body>
+</html>

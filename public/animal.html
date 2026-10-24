@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Historia clínica</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="buscar.html" id="back"></a>
+
+    <section class="patient" id="patient"></section>
+    <div id="alerts" style="margin:16px 0"></div>
+
+    <div class="cols cols--side">
+      <section class="panel" id="hc">
+        <nav class="tabs" id="tabs" role="tablist"></nav>
+        <div id="tabBody"></div>
+      </section>
+
+      <aside>
+        <section class="panel" id="plan"></section>
+        <section class="panel" id="peso"></section>
+        <section class="panel" id="turnos"></section>
+        <section class="panel hidden" id="cuenta"></section>
+        <section class="panel" id="datos"></section>
+      </aside>
+    </div>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/animal-form.js"></script>
+  <script src="js/cobros.js"></script>
+  <script src="js/animal.js"></script>
+</body>
+</html>

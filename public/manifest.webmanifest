@@ -1,0 +1,17 @@
+{
+  "name": "ANIMAL — Historia clínica veterinaria",
+  "short_name": "ANIMAL",
+  "description": "Historia clínica, agenda, vacunas, recetas y registros monetarios para veterinarias.",
+  "lang": "es-AR",
+  "start_url": "/login.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1638B8",
+  "theme_color": "#1638B8",
+  "icons": [
+    { "src": "/assets/iconos/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/iconos/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/iconos/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

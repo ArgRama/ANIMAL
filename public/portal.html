@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Mi libreta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page page--narrow">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title" id="hola"></h1>
+        <p class="page-sub" id="clinica"></p>
+      </div>
+      <button class="btn btn--ghost" type="button" id="misDatos"></button>
+    </div>
+    <div id="avisosTutor"></div>
+    <div id="animales"></div>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/docs.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, api, avatar, especie, edad, fecha, tagVacuna, TIPO_TURNO, SEXO, modal, close, onSubmit, toast } = HV;
+      await HV.init({ roles: ["tutor"] });
+      const [P, c] = await Promise.all([api("GET", "/api/portal"), api("GET", "/api/clinica")]);
+      $("#hola").textContent = `Hola, ${P.tutor.nombre}`;
+      $("#clinica").innerHTML = `Historia clínica y libreta sanitaria de tus mascotas en <b>${esc(c.nombre || "la veterinaria")}</b>${c.telefono ? ` · Tel. ${esc(c.telefono)}` : ""}`;
+
+      /* ---------- Mis datos de contacto ---------- */
+      $("#misDatos").innerHTML = `${icon("users")}Mis datos`;
+      $("#misDatos").addEventListener("click", () => {
+        const t = P.tutor;
+        const m = modal({
+          title: "Mis datos de contacto",
+          body: `<form class="form-grid" novalidate>
+            <label class="field"><span>Teléfono (WhatsApp)</span><input name="telefono" type="tel" value="${esc(t.telefono)}" /></label>
+            <label class="field"><span>Dirección</span><input name="direccion" value="${esc(t.direccion === "—" ? "" : t.direccion)}" /></label>
+            <label class="field"><span>Ciudad</span><input name="ciudad" value="${esc(t.ciudad)}" /></label>
+            <label class="field"><span>Provincia</span><input name="provincia" value="${esc(t.provincia)}" /></label>
+            <p class="span-all muted" style="margin:0;font-size:12.5px;line-height:1.5">Nombre: <b>${esc(t.apellido)}, ${esc(t.nombre)}</b> · DNI ${esc(t.dni)} · Email ${esc(t.email || "—")}.
+              Para cambiar esos datos, pedíselo a la veterinaria.</p>
+            <div class="span-all form-error" role="alert"></div>
+            <div class="span-all form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button class="btn">${icon("check")}Guardar</button></div></form>`,
+        });
+        onSubmit($("form", m), async (d) => {
+          await api("PUT", "/api/portal/datos", d);
+          Object.assign(P.tutor, d);
+          close(m); toast("Tus datos se actualizaron", "ok");
+        });
+      });
+
+      /* ---------- Saldo y pedidos de turno ---------- */
+      const ESTADO_SOL = { pendiente: ["warn", "Esperando respuesta"], agendada: ["ok", "Turno agendado"], rechazada: ["danger", "No disponible"], cancelada: ["", "Cancelado"] };
+      function renderAvisos() {
+        const cta = P.cuenta;
+        $("#avisosTutor").innerHTML = [
+          cta.saldo > 0 ? `<section class="panel"><div class="panel__head"><h2 class="panel__title">${icon("cash")}Saldo pendiente</h2>
+              <span class="monto monto--neg">${HV.pesos(cta.saldo)}</span></div>
+            <div class="list">${cta.pendientes.map((x) => `<div class="list__item" style="padding:8px 0"><span class="list__main">
+              <span class="list__title" style="font-size:13.5px">${esc(x.concepto)}</span><span class="list__sub">${fecha(x.fecha)}${x.animal ? " · " + esc(x.animal) : ""}</span></span>
+              <span class="monto" style="font-size:13.5px">${HV.pesos(x.monto)}</span></div>`).join("")}</div>
+            <p class="muted" style="font-size:12.5px;margin:10px 0 0">Podés abonarlo en tu próxima visita a la veterinaria.</p></section>` : "",
+          P.solicitudes.length ? `<section class="panel"><div class="panel__head"><h2 class="panel__title">${icon("calendar")}Mis pedidos de turno</h2></div>
+            <div class="list">${P.solicitudes.map((s) => {
+              const [cl, tx] = ESTADO_SOL[s.estado];
+              return `<div class="list__item"><span class="list__main"><span class="list__title">${esc(s.animal)} · ${fecha(s.fecha)} (${esc(s.franja)})</span>
+                <span class="list__sub">${esc(s.motivo)}${s.estado === "agendada" && s.turno_fecha ? ` · <b>Turno: ${fecha(s.turno_fecha)} a las ${esc(s.turno_hora)} hs</b>` : ""}${s.respuesta ? ` · Respuesta: ${esc(s.respuesta)}` : ""}</span></span>
+                <span class="tag tag--${cl}">${tx}</span>
+                ${s.estado === "pendiente" ? `<button class="btn btn--plain btn--sm" type="button" data-cancelar-sol="${s.id}">Cancelar</button>` : ""}</div>`;
+            }).join("")}</div></section>` : "",
+        ].join("");
+        document.querySelectorAll("[data-cancelar-sol]").forEach((b) => b.addEventListener("click", async () => {
+          if (!(await HV.confirmar("¿Cancelar este pedido de turno?", { ok: "Cancelar pedido", peligro: true }))) return;
+          await api("POST", `/api/portal/solicitudes/${b.dataset.cancelarSol}/cancelar`, {});
+          P.solicitudes.find((s) => s.id === Number(b.dataset.cancelarSol)).estado = "cancelada";
+          toast("Pedido cancelado");
+          renderAvisos();
+        }));
+      }
+      renderAvisos();
+
+      function pedirTurno(animal) {
+        const m = modal({
+          title: `Pedir turno para ${animal.nombre}`,
+          body: `<form class="form-grid" novalidate>
+            <label class="field"><span>¿Qué día te queda bien? *</span><input name="fecha" type="date" min="${HV.hoy()}" value="${HV.sumarDias(HV.hoy(), 1)}" required /></label>
+            <div class="field"><span>Horario</span>
+              <div class="seg" data-franja><button type="button" data-v="mañana">Mañana</button><button type="button" data-v="tarde">Tarde</button><button type="button" data-v="cualquiera" class="is-on">Cualquiera</button></div></div>
+            <label class="field span-all"><span>Motivo *</span><textarea name="motivo" rows="3" required maxlength="300" placeholder="Ej.: vacuna anual, control, está decaído desde ayer…"></textarea></label>
+            <p class="span-all muted" style="margin:0;font-size:12.5px;line-height:1.5">La veterinaria te confirma el día y la hora. Si es una urgencia, llamá por teléfono.</p>
+            <div class="span-all form-error" role="alert"></div>
+            <div class="span-all form-actions"><button type="button" class="btn btn--ghost" data-close>Cancelar</button><button class="btn btn--green">${icon("check")}Enviar pedido</button></div></form>`,
+        });
+        let franja = "cualquiera";
+        $("[data-franja]", m).addEventListener("click", (e) => {
+          const b = e.target.closest("[data-v]");
+          if (!b) return;
+          franja = b.dataset.v;
+          m.querySelectorAll("[data-franja] button").forEach((x) => x.classList.toggle("is-on", x === b));
+        });
+        onSubmit($("form", m), async (d) => {
+          if (!d.motivo.trim()) throw new Error("Contanos el motivo del turno.");
+          await api("POST", "/api/portal/solicitudes", { animal_id: animal.id, fecha: d.fecha, franja, motivo: d.motivo });
+          P.solicitudes.unshift({ id: 0, animal: animal.nombre, fecha: d.fecha, franja, motivo: d.motivo, estado: "pendiente" });
+          close(m); toast("Pedido enviado. Te avisamos cuando esté confirmado.", "ok");
+          const nuevo = await api("GET", "/api/portal");
+          P.solicitudes = nuevo.solicitudes;
+          renderAvisos();
+        });
+      }
+
+      if (!P.animales.length) {
+        $("#animales").innerHTML = `<div class="panel empty">${icon("paw")}Todavía no hay animales asociados a tu cuenta.</div>`;
+        return;
+      }
+      $("#animales").innerHTML = P.animales.map((L) => {
+        const a = L.animal, e = especie(a.especie);
+        const malas = L.plan_vacunas.filter((v) => ["vencida", "pendiente", "por vencer"].includes(v.estado));
+        return `<section class="panel">
+          <div class="list__item" style="padding:0 0 14px">
+            ${avatar(a.especie, "", a.foto)}
+            <div class="list__main"><div class="patient__name" style="font-size:21px">${esc(a.nombre)}</div>
+              <div class="list__sub">${esc(e.nombre)}${a.raza ? " · " + esc(a.raza) : ""} · ${esc(SEXO[a.sexo])} · ${esc(edad(a.fecha_nac))}${a.peso ? " · " + a.peso + " kg" : ""}</div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+              <a class="btn btn--sm" href="animal.html?id=${a.id}">${icon("file")}Historia clínica</a>
+              <a class="btn btn--ghost btn--sm" href="libreta.html?id=${a.id}">${icon("print")}Libreta</a>
+              ${a.fallecido ? "" : `<button class="btn btn--green btn--sm" type="button" data-pedir="${a.id}">${icon("calendar")}Pedir turno</button>`}
+            </div>
+          </div>
+          ${a.fallecido ? `<div class="alert alert--info">${icon("heart")}En memoria de ${esc(a.nombre)}.</div>` : ""}
+          ${!a.fallecido && malas.length ? `<div class="alert" style="margin-bottom:14px">${icon("syringe")}<span><b>Atención:</b> ${malas.map((v) => `${esc(v.nombre)} (${v.estado}${v.fecha ? " · " + fecha(v.fecha) : ""})`).join(", ")}. Pedí turno a la veterinaria.</span></div>` : ""}
+          <div class="cols cols--2">
+            <div>
+              <h3 class="panel__title" style="font-size:14.5px;margin-bottom:6px">${icon("syringe")}Vacunas</h3>
+              ${L.plan_vacunas.length ? L.plan_vacunas.map((v) => `<div class="vac-row"><div class="vac-row__main"><div class="vac-row__name">${esc(v.nombre)}</div>
+                <div class="vac-row__sub">${v.ultima ? "Última " + fecha(v.ultima) : "Sin aplicar"}${v.fecha ? (v.estado === "vencida" ? " · venció " : " · próxima ") + fecha(v.fecha) : ""}</div></div>${tagVacuna(v.estado)}</div>`).join("")
+                : L.vacunas.length ? L.vacunas.map((v) => `<div class="vac-row"><div class="vac-row__main"><div class="vac-row__name">${esc(v.nombre)}</div><div class="vac-row__sub">${fecha(v.fecha)}</div></div></div>`).join("")
+                : `<p class="muted">Sin vacunas registradas.</p>`}
+            </div>
+            <div>
+              <h3 class="panel__title" style="font-size:14.5px;margin-bottom:6px">${icon("calendar")}Próximos turnos</h3>
+              ${L.turnos.length ? L.turnos.map((t) => `<div class="vac-row"><div class="vac-row__main"><div class="vac-row__name">${fecha(t.fecha)} · ${esc(t.hora)} hs</div>
+                <div class="vac-row__sub">${esc(TIPO_TURNO[t.tipo] || t.tipo)}${t.vet ? " · Dr/a. " + esc(t.vet) : ""}</div></div><span class="tag tag--info">${esc(t.estado)}</span></div>`).join("")
+                : `<p class="muted">No tenés turnos agendados.</p>`}
+              <h3 class="panel__title" style="font-size:14.5px;margin:16px 0 6px">${icon("pill")}Recetas</h3>
+              ${L.recetas.length ? L.recetas.slice(0, 4).map((r) => `<div class="vac-row"><div class="vac-row__main"><div class="vac-row__name">${fecha(r.fecha)}${r.diagnostico ? " · " + esc(r.diagnostico) : ""}</div>
+                <div class="vac-row__sub">${r.items.map((i) => esc(i.producto)).join(", ")}</div></div><a class="icon-btn" href="receta.html?id=${r.id}" aria-label="Ver receta" title="Ver receta">${icon("file")}</a></div>`).join("")
+                : `<p class="muted">Sin recetas.</p>`}
+            </div>
+          </div>
+        </section>`;
+      }).join("");
+      document.querySelectorAll("[data-pedir]").forEach((b) => b.addEventListener("click", () =>
+        pedirTurno(P.animales.find((L) => L.animal.id === Number(b.dataset.pedir)).animal)));
+    })();
+  </script>
+</body>
+</html>

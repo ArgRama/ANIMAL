@@ -1,0 +1,5 @@
+node_modules/
+
+# Datos reales de la veterinaria: base, fotos, estudios y documentos del equipo (DNI, firma).
+# Nunca se suben al repositorio.
+data/

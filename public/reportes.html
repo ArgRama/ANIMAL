@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Reportes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="index.html" id="back"></a>
+    <div class="page-head">
+      <div><h1 class="page-title">Reportes</h1><p class="page-sub">Actividad de la clínica en el período elegido.</p></div>
+      <form id="fRango" class="search-bar" style="gap:10px">
+        <label class="field"><span>Desde</span><input name="desde" type="date" /></label>
+        <label class="field"><span>Hasta</span><input name="hasta" type="date" /></label>
+        <button class="btn btn--sm" style="align-self:flex-end;height:44px">Actualizar</button>
+        <a class="btn btn--ghost btn--sm" style="align-self:flex-end;height:44px" href="/api/export/reporte.xlsx" id="exportar"></a>
+      </form>
+    </div>
+    <div id="out"></div>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, api, fecha, avatar, MESES, pesos, MEDIOS } = HV;
+      await HV.init({ roles: ["director"] });
+      $("#back").innerHTML = `${icon("back")}Inicio`;
+      $("#exportar").innerHTML = `${icon("download")}Descargar Excel`;
+
+      // `fmt` formatea el número (p. ej. pesos); `etq` traduce la etiqueta.
+      const barras = (rows, label, n = "n", { fmt = (x) => x, etq = (x) => x, verde = false } = {}) => {
+        if (!rows.length) return `<div class="empty">${icon("chart")}Sin datos en el período.</div>`;
+        const max = Math.max(...rows.map((r) => r[n]), 1);
+        return `<div class="bars">${rows.map((r) => `<div class="bar" style="${n === "total" ? "grid-template-columns:130px 1fr auto" : ""}"><span title="${esc(etq(r[label]))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(etq(r[label]))}</span>
+          <span class="bar__track"><span class="bar__fill" style="width:${(r[n] / max) * 100}%;display:block;${verde ? "background:var(--card-green)" : ""}"></span></span><span class="bar__n">${fmt(r[n])}</span></div>`).join("")}</div>`;
+      };
+
+      async function cargar(q = "") {
+        const R = await api("GET", "/api/reportes" + q);
+        $("#fRango [name=desde]").value = R.desde;
+        $("#fRango [name=hasta]").value = R.hasta;
+        $("#exportar").href = `/api/export/reporte.xlsx?desde=${R.desde}&hasta=${R.hasta}`;
+        const maxMes = Math.max(...R.consultas_por_mes.map((m) => m.n), 1);
+        const total = (k) => R.por_profesional.reduce((s, p) => s + p[k], 0);
+
+        const ingresos = R.ingresos_por_mes.reduce((s, m) => s + m.total, 0);
+        const maxIng = Math.max(...R.ingresos_por_mes.map((m) => m.total), 1);
+        $("#out").innerHTML = `
+          <div class="kpis4" style="margin-bottom:18px">
+            ${[[pesos(ingresos), "Ingresos del período", "cash", true], [total("consultas"), "Consultas", "stetho"], [total("vacunas"), "Vacunas aplicadas", "syringe"], [total("recetas"), "Recetas emitidas", "pill"]]
+              .map(([n, l, i, verde]) => `<section class="panel" style="margin:0"><div class="list__item" style="padding:0;border:0">
+                <span class="ava ${verde ? "ava--grandes" : ""}">${icon(i)}</span><div class="stat"><span class="stat__n" ${verde ? 'style="color:var(--green-600)"' : ""}>${n}</span><span class="stat__l">${l}</span></div></div></section>`).join("")}
+          </div>
+          <div class="cols cols--3" style="margin-bottom:18px">
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("cash")}Ingresos por mes</h2></div>
+              ${R.ingresos_por_mes.length ? `<div class="vbars">${R.ingresos_por_mes.map((m) => {
+                const [y, mm] = m.mes.split("-").map(Number);
+                return `<div class="vbar"><span class="vbar__n" style="font-size:11px">${pesos(m.total)}</span><span class="vbar__fill" style="height:${(m.total / maxIng) * 110}px;background:var(--card-green)"></span><span class="vbar__l">${MESES[mm - 1].slice(0, 3)} ${String(y).slice(2)}</span></div>`;
+              }).join("")}</div>` : `<div class="empty">${icon("cash")}Sin cobros en el período.</div>`}</section>
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("chart")}Por medio de pago</h2></div>
+              ${barras(R.ingresos_por_medio, "medio", "total", { fmt: pesos, etq: (m) => MEDIOS[m] || m, verde: true })}</section>
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("file")}Por concepto</h2>
+              <span class="tag tag--warn" title="Saldo pendiente de todos los tutores">Deuda total ${pesos(R.deuda_total)}</span></div>
+              ${barras(R.ingresos_por_concepto, "concepto", "total", { fmt: pesos, verde: true })}</section>
+          </div>
+          <div class="cols cols--2">
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("chart")}Consultas por mes</h2></div>
+              ${R.consultas_por_mes.length ? `<div class="vbars">${R.consultas_por_mes.map((m) => {
+                const [y, mm] = m.mes.split("-").map(Number);
+                return `<div class="vbar"><span class="vbar__n">${m.n}</span><span class="vbar__fill" style="height:${(m.n / maxMes) * 110}px"></span><span class="vbar__l">${MESES[mm - 1].slice(0, 3)} ${String(y).slice(2)}</span></div>`;
+              }).join("")}</div>` : `<div class="empty">${icon("chart")}Sin consultas en el período.</div>`}</section>
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("paw")}Pacientes por especie</h2></div>${barras(R.por_especie, "nombre")}</section>
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("users")}Por profesional</h2></div>
+              <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Profesional</th><th>Consultas</th><th>Vacunas</th><th>Recetas</th></tr></thead>
+              <tbody>${R.por_profesional.map((p) => `<tr><td><b>${esc(p.profesional)}</b></td><td>${p.consultas}</td><td>${p.vacunas}</td><td>${p.recetas}</td></tr>`).join("")}</tbody></table></div></section>
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("syringe")}Vacunas aplicadas</h2></div>${barras(R.vacunas_aplicadas, "nombre")}</section>
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("stetho")}Diagnósticos más frecuentes</h2></div>${barras(R.diagnosticos, "diagnostico")}</section>
+            <section class="panel" style="margin:0"><div class="panel__head"><h2 class="panel__title">${icon("calendar")}Turnos por estado</h2></div>${barras(R.turnos_por_estado, "estado")}</section>
+          </div>
+          <section class="panel" style="margin-top:18px"><div class="panel__head"><h2 class="panel__title">${icon("alert")}Vacunas vencidas u obligatorias pendientes</h2><span class="panel__count">${R.vencidas.length}</span></div>
+            ${R.vencidas.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Paciente</th><th>Tutor</th><th>Teléfono</th><th>Vacunas</th><th>Desde</th></tr></thead><tbody>
+              ${R.vencidas.map((v) => `<tr><td><a href="animal.html?id=${v.animal_id}" style="display:flex;gap:8px;align-items:center">${avatar(v.especie, "ava--sm", v.foto)}<b>${esc(v.animal)}</b></a></td>
+                <td>${esc(v.tutor_apellido)}</td><td>${esc(v.tutor_telefono || "—")}</td><td>${esc(v.vacunas.join(", "))}</td><td>${v.desde ? fecha(v.desde) : "—"}</td></tr>`).join("")}
+            </tbody></table></div>` : `<div class="empty">${icon("check")}Ninguna.</div>`}</section>`;
+      }
+
+      $("#fRango").addEventListener("submit", (e) => {
+        e.preventDefault();
+        cargar(`?desde=${e.target.desde.value}&hasta=${e.target.hasta.value}`);
+      });
+      cargar();
+    })();
+  </script>
+</body>
+</html>

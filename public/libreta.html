@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Libreta sanitaria</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="doc-tools">
+    <a class="back" id="back" href="#"></a>
+    <button class="btn" type="button" id="imprimir"></button>
+  </div>
+  <article class="doc" id="doc"></article>
+
+  <script src="js/core.js"></script>
+  <script src="js/docs.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, api, fecha } = HV;
+      const me = await HV.init();
+      const id = HV.qs("id");
+      $("#back").innerHTML = `${icon("back")}Volver`;
+      $("#back").href = me.rol === "tutor" ? "portal.html" : `animal.html?id=${encodeURIComponent(id)}`;
+      $("#imprimir").innerHTML = `${icon("print")}Imprimir libreta`;
+      $("#imprimir").addEventListener("click", () => window.print());
+
+      const [L, clinica] = await Promise.all([api("GET", "/api/libreta/" + encodeURIComponent(id)), api("GET", "/api/clinica")])
+        .catch((e) => { $("#doc").innerHTML = `<div class="empty">${esc(e.message)}</div>`; throw e; });
+      document.title = `Libreta sanitaria — ${L.animal.nombre}`;
+      $("#doc").innerHTML = `
+        ${Docs.cabecera(clinica, `Emitida el ${fecha(HV.hoy())}`)}
+        <h1 class="doc__title">Libreta sanitaria</h1>
+        ${Docs.libreta(L)}
+        <div class="doc__sign"><div>Firma y sello del profesional</div></div>
+        <p class="doc__foot">La vacunación antirrábica de perros y gatos es obligatoria desde los 3 meses de edad, con revacunación anual.</p>`;
+    })();
+  </script>
+</body>
+</html>

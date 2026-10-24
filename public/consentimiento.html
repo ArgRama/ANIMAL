@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Consentimiento informado</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="doc-tools">
+    <a class="back" id="back" href="javascript:history.back()"></a>
+    <button class="btn" type="button" id="imprimir"></button>
+  </div>
+  <article class="doc" id="doc"></article>
+
+  <script src="js/core.js"></script>
+  <script src="js/docs.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, api, fecha, edad, especie, SEXO } = HV;
+      await HV.init({ roles: ["director", "veterinario", "tutor"] });
+      $("#back").innerHTML = `${icon("back")}Volver`;
+      $("#imprimir").innerHTML = `${icon("print")}Imprimir para firmar`;
+      $("#imprimir").addEventListener("click", () => window.print());
+
+      const [{ practica: p, animal: a, tutor: t }, clinica] = await Promise.all([
+        api("GET", `/api/practicas/${encodeURIComponent(HV.qs("id"))}/documento`),
+        api("GET", "/api/clinica"),
+      ]).catch((e) => { $("#doc").innerHTML = `<div class="empty">${esc(e.message)}</div>`; throw e; });
+
+      const e = especie(a.especie);
+      const cirugia = p.tipo === "cirugia";
+      const linea = '<span class="cons__line"></span>';
+      document.title = `Consentimiento — ${p.nombre} — ${a.nombre}`;
+      $("#doc").innerHTML = `
+        ${Docs.cabecera(clinica, `Fecha: ${fecha(p.fecha)}`)}
+        <h1 class="doc__title">Consentimiento informado · ${cirugia ? "cirugía" : "práctica"} y anestesia</h1>
+
+        <div class="doc__grid">
+          <div><b>Paciente:</b> ${esc(a.nombre)}</div>
+          <div><b>Especie / raza:</b> ${esc(e.nombre)}${a.raza ? " · " + esc(a.raza) : ""}</div>
+          <div><b>Sexo / edad:</b> ${esc(SEXO[a.sexo])} · ${esc(edad(a.fecha_nac))}</div>
+          <div><b>Peso:</b> ${a.peso ? a.peso + " kg" : "—"}</div>
+          <div><b>Identificación:</b> ${esc(a.microchip ? "Microchip " + a.microchip : a.identificacion || "—")}</div>
+          <div><b>Alergias:</b> ${esc(a.alergias || "No registradas")}</div>
+          <div><b>Tutor / responsable:</b> ${esc(t.apellido)}, ${esc(t.nombre)}</div>
+          <div><b>DNI / CUIT:</b> ${esc(t.dni)} · <b>Tel.:</b> ${esc(t.telefono || "—")}</div>
+        </div>
+
+        <h2 class="doc__title">Procedimiento</h2>
+        <div class="cert__box cert__box--proc">
+          <div><span>${cirugia ? "Cirugía" : "Práctica"}</span><b>${esc(p.nombre)}</b></div>
+          <div><span>Anestesia / sedación</span><b>${esc(p.anestesia || "A definir")}</b></div>
+          <div><span>Profesional</span><b>Dr/a. ${esc(p.autor || "")}</b></div>
+        </div>
+        ${p.descripcion ? `<p class="cons__p"><b>Descripción:</b> ${esc(p.descripcion)}</p>` : ""}
+
+        <h2 class="doc__title">Declaración del tutor</h2>
+        <p class="cons__p">En mi carácter de tutor/a o responsable del paciente, autorizo al equipo profesional de
+          <b>${esc(clinica.nombre || "la veterinaria")}</b> a realizar el procedimiento indicado y la anestesia o sedación que requiera. Declaro que:</p>
+        <ol class="cons__list">
+          <li>Me explicaron en qué consiste el procedimiento, su objetivo y las alternativas posibles, y pude hacer todas las preguntas que consideré necesarias.</li>
+          <li>Comprendo que toda anestesia y todo procedimiento ${cirugia ? "quirúrgico " : ""}implican riesgos, incluso en animales sanos, que pueden incluir complicaciones graves y, excepcionalmente, la muerte.</li>
+          <li>Autorizo los estudios previos y las maniobras adicionales que el profesional considere imprescindibles ante una urgencia durante el procedimiento, con aviso posterior.</li>
+          <li>Informé todos los antecedentes que conozco (enfermedades, medicación, reacciones previas, celo o preñez) y cumplí el ayuno indicado.</li>
+          <li>Recibí las indicaciones de cuidados posteriores y me comprometo a cumplirlas y a concurrir a los controles.</li>
+        </ol>
+
+        <div class="cons__fill">
+          <div>Ayuno de sólidos: ${linea} h &nbsp;·&nbsp; de líquidos: ${linea} h</div>
+          <div>Teléfono de contacto durante el procedimiento: ${linea}</div>
+          <div>Observaciones: ${linea}${linea}</div>
+        </div>
+
+        <div class="cons__signs">
+          <div>Firma del tutor / responsable<br />Aclaración: ${esc(t.apellido)}, ${esc(t.nombre)}<br />DNI: ${esc(t.dni)}</div>
+          <div>${p.usuario_id ? `<img class="doc__firma" src="/api/usuarios/${p.usuario_id}/documentos/firma" alt="" onerror="this.remove()" />` : ""}Dr/a. ${esc(p.autor || "")}<br />Médico/a veterinario/a · ${esc(p.autor_matricula || "Mat. —")}${p.autor_ente ? "<br />" + esc(p.autor_ente) : ""}<br />Firma y sello</div>
+        </div>
+        <p class="doc__foot">Se entrega copia al tutor. El original firmado queda archivado en la historia clínica del paciente.</p>`;
+    })();
+  </script>
+</body>
+</html>

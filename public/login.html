@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Ingresar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="lg">
+    <!-- ===== Marca ===== -->
+    <section class="lg__brand">
+      <span class="lg__ring lg__ring--a" aria-hidden="true"></span>
+      <span class="lg__ring lg__ring--b" aria-hidden="true"></span>
+
+      <div class="lg__logo">
+        <img class="lg__emblema" src="assets/animal-emblema.webp" alt="" />
+        <img class="lg__texto" src="assets/animal-texto.webp" alt="ANIMAL" />
+      </div>
+
+      <div class="lg__pitch">
+        <span class="lg__badge">Plataforma certificada por el Ministerio de Salud</span>
+        <h1 class="lg__title">Plataforma de Cuidado Animal</h1>
+        <p class="lg__text">Historia Clínica, Agenda, Recetas, Registros Monetarios y 26 módulos en un solo lugar, para profesionalizar la gestión de tu Institución.<br />
+          Fácil de usar, Segura y Homologada a nivel nacional.</p>
+      </div>
+
+      <div class="lg__bottom">
+        <div class="lg__stat"><b>Recetas</b><span>electrónicas certificadas</span></div>
+        <div class="lg__stat"><b>Vacunas</b><span>Registro de vacunas</span></div>
+        <button class="lg__info" type="button" id="info">Info ANIMAL</button>
+      </div>
+    </section>
+
+    <!-- ===== Formulario ===== -->
+    <main class="lg__main">
+      <form class="lg__form" id="loginForm" novalidate>
+        <h2 class="lg__h">Ingresá a tu cuenta</h2>
+        <p class="lg__sub">¿No tenés cuenta? <button class="lg__link" type="button" id="crear">Creá una gratis</button></p>
+
+        <label class="lg__field">
+          <span class="lg__label">Email</span>
+          <span class="lg__input"><input name="email" type="email" placeholder="nombre@ejemplo.com" autocomplete="username" required autofocus /></span>
+        </label>
+
+        <div class="lg__field">
+          <label class="lg__label" for="password">Contraseña
+            <button class="lg__link" type="button" id="olvide">¿Olvidaste tu contraseña?</button></label>
+          <span class="lg__input">
+            <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+            <button class="lg__eye" type="button" id="ojo" aria-label="Mostrar contraseña" aria-pressed="false"></button>
+          </span>
+        </div>
+
+        <label class="lg__check"><input type="checkbox" name="recordar" checked />Recordarme en este dispositivo</label>
+
+        <div class="lg__error form-error" role="alert"></div>
+        <button class="lg__btn" type="submit">Ingresar</button>
+
+        <div class="lg__demo">
+          <p class="lg__demo-t">Usuarios de prueba · contraseña <b>humanvet1</b></p>
+          <ul>
+            <li><button type="button" title="Completar con este usuario" data-demo="director@humanvet.test"><b>Director</b><span>director@humanvet.test</span></button></li>
+            <li><button type="button" title="Completar con este usuario" data-demo="vet@humanvet.test"><b>Veterinaria</b><span>vet@humanvet.test</span></button></li>
+            <li><button type="button" title="Completar con este usuario" data-demo="vet2@humanvet.test"><b>Veterinario</b><span>vet2@humanvet.test</span></button></li>
+            <li><button type="button" title="Completar con este usuario" data-demo="recepcion@humanvet.test"><b>Recepción</b><span>recepcion@humanvet.test</span></button></li>
+            <li><button type="button" title="Completar con este usuario" data-demo="tutor@humanvet.test"><b>Tutor</b><span>tutor@humanvet.test</span></button></li>
+          </ul>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <a class="lg__help" id="ayuda" href="#" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.66 15l-1.3 4.76 4.88-1.28A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-2.9.76.78-2.83-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.09-.39-.13-.56.12-.16.25-.64.8-.78.96-.15.17-.29.19-.54.06a6.7 6.7 0 0 1-3.35-2.93c-.25-.44.25-.4.72-1.34.08-.16.04-.3-.02-.42l-.76-1.83c-.2-.48-.4-.41-.56-.42h-.47a.9.9 0 0 0-.66.31 2.77 2.77 0 0 0-.86 2.06 4.82 4.82 0 0 0 1 2.56 11 11 0 0 0 4.22 3.73c1.57.68 2.19.74 2.98.62.48-.07 1.46-.6 1.67-1.18.2-.58.2-1.07.14-1.18-.06-.1-.22-.16-.47-.29Z"/></svg>
+    Te ayudamos
+  </a>
+
+  <script src="js/core.js"></script>
+  <script>
+    (() => {
+      const { $, icon, modal, whatsapp } = HV;
+      const form = $("#loginForm");
+
+      // Sólo se vuelve a páginas propias (evita redirecciones abiertas).
+      const vuelta = HV.qs("vuelta");
+      const destino = (rol) =>
+        vuelta && /^[a-z-]+\.html(\?[\w=&%.-]*)?$/.test(vuelta) && !(rol === "tutor" && !/^(portal|libreta|receta|certificado)\.html/.test(vuelta))
+          ? vuelta
+          : rol === "tutor" ? "portal.html" : "index.html";
+
+      // Si ya hay sesión, entrar directo.
+      fetch("/api/me").then((r) => (r.ok ? r.json() : null)).then((me) => { if (me) location.replace(destino(me.rol)); });
+
+      /* ---------- Mostrar / ocultar contraseña ---------- */
+      const pass = $("#password"), ojo = $("#ojo");
+      const eyeOff = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.4 10.4 0 0 1 12 5c7 0 10 7 10 7a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3 7 10 7a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/></svg>';
+      const eyeOn = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+      ojo.innerHTML = eyeOn;
+      ojo.addEventListener("click", () => {
+        const ver = pass.type === "password";
+        pass.type = ver ? "text" : "password";
+        pass.classList.toggle("is-pass", ver);
+        ojo.innerHTML = ver ? eyeOff : eyeOn;
+        ojo.setAttribute("aria-pressed", String(ver));
+        ojo.setAttribute("aria-label", ver ? "Ocultar contraseña" : "Mostrar contraseña");
+        pass.focus();
+      });
+
+      /* ---------- Usuarios de prueba: completan el formulario ---------- */
+      document.querySelectorAll("[data-demo]").forEach((b) => b.addEventListener("click", () => {
+        form.email.value = b.dataset.demo;
+        pass.value = "humanvet1";
+        $(".lg__btn").focus();
+      }));
+
+      /* ---------- Ingreso ---------- */
+      HV.onSubmit(form, async (d) => {
+        if (!d.email || !d.password) throw new Error("Ingresá tu email y contraseña.");
+        const me = await HV.api("POST", "/api/login", { email: d.email, password: d.password, recordar: d.recordar });
+        location.href = destino(me.rol);
+      });
+
+      /* ---------- Ayuda por WhatsApp (teléfono de la veterinaria) ---------- */
+      let contacto = { nombre: "ANIMAL", telefono: null };
+      const linkAyuda = (texto) => whatsapp(contacto.telefono, texto);
+      fetch("/api/contacto").then((r) => r.json()).then((c) => {
+        contacto = c;
+        const wa = linkAyuda("Hola, necesito ayuda para ingresar a ANIMAL.");
+        if (wa) $("#ayuda").href = wa; else $("#ayuda").remove();
+      }).catch(() => $("#ayuda").remove());
+
+      const info = (titulo, html) => modal({ title: titulo, body: `<div class="lg-modal">${html}</div>
+        <div class="form-actions"><button class="btn" type="button" data-close>Entendido</button></div>` });
+      const botonWa = (texto) => {
+        const wa = linkAyuda(texto);
+        return wa ? `<p style="margin-top:14px"><a class="btn btn--green" href="${wa}" target="_blank" rel="noopener">${icon("msg")}Escribir por WhatsApp</a></p>` : "";
+      };
+
+      $("#crear").addEventListener("click", () => info("Crear una cuenta",
+        `<p>Las cuentas del equipo (veterinarios y recepción) las crea el <b>director</b> de la veterinaria desde <b>Equipo y clínica</b>.</p>
+         <p>Si sos <b>tutor</b>, pedile a tu veterinaria que te habilite el acceso a la libreta sanitaria de tus animales: te llega tu usuario y una clave temporal.</p>
+         ${botonWa("Hola, quiero crear una cuenta en ANIMAL.")}`));
+
+      $("#olvide").addEventListener("click", () => info("¿Olvidaste tu contraseña?",
+        `<p>Por seguridad, la clave se genera de nuevo desde la veterinaria:</p>
+         <ul><li><b>Equipo:</b> el director entra a <b>Equipo y clínica</b> y toca la llave junto a tu nombre.</li>
+           <li><b>Tutores:</b> la veterinaria genera una clave nueva desde la ficha de tu animal.</li></ul>
+         <p>Después de ingresar podés cambiarla desde el menú.</p>
+         ${botonWa("Hola, olvidé mi contraseña de ANIMAL.")}`));
+
+      $("#info").addEventListener("click", () => info("ANIMAL",
+        `<p>Historia clínica veterinaria para <b>todas las especies</b>: pequeños animales, exóticos y grandes animales.</p>
+         <ul><li>Historia clínica con signos vitales según la especie, estudios con adjuntos y reproducción.</li>
+           <li>Plan de vacunación automático, certificado antirrábico y recordatorios por WhatsApp.</li>
+           <li>Recetas con calculadora de dosis y alertas de toxicidad por especie.</li>
+           <li>Agenda de turnos, libreta sanitaria online para el tutor y reportes.</li></ul>`));
+    })();
+  </script>
+</body>
+</html>

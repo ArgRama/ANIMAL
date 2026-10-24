@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Buscar paciente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="index.html" id="back"></a>
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Buscar paciente</h1>
+        <p class="page-sub">Por nombre del animal, apellido o DNI del tutor, microchip, caravana o teléfono.</p>
+      </div>
+      <a class="btn btn--green" href="registro.html" id="nuevo"></a>
+    </div>
+
+    <div class="search-bar">
+      <label class="search-bar__input field" id="qWrap">
+        <input id="q" type="search" placeholder="Ej.: Toby, Gómez, 28456789, 0320000…" autocomplete="off" aria-label="Buscar" />
+      </label>
+      <label class="field"><select id="especie" aria-label="Especie"><option value="">Todas las especies</option></select></label>
+    </div>
+
+    <p class="page-sub" id="info" style="margin-top:14px"></p>
+    <div class="results" id="results"></div>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/buscar.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Inicio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page">
+    <div class="home__hero">
+      <span class="logo-emblema home__logo" role="img" aria-label="ANIMAL"></span>
+      <span class="logo-texto home__wordmark" aria-hidden="true"></span>
+      <span class="home__tag">VETERINARIA</span>
+    </div>
+
+    <nav class="home__grid" id="menu" aria-label="Menú principal"></nav>
+
+    <div class="cols cols--3" id="resumen">
+      <section class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title" id="tTurnos"></h2>
+          <a class="btn btn--plain btn--sm" href="turnos.html">Ver agenda</a>
+        </div>
+        <div class="list" id="turnosHoy"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__head">
+          <h2 class="panel__title" id="tVencidas"></h2>
+          <a class="btn btn--plain btn--sm" href="recordatorios.html">Ver todos</a>
+        </div>
+        <div class="list" id="vencidas"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel__head"><h2 class="panel__title" id="tControles"></h2></div>
+        <div class="list" id="controles"></div>
+        <div class="cols cols--3" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line-2)" id="totales"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/inicio.js"></script>
+</body>
+</html>

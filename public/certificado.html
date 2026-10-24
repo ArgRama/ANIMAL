@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Certificado antirrábico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="doc-tools">
+    <a class="back" id="back" href="javascript:history.back()"></a>
+    <button class="btn" type="button" id="imprimir"></button>
+  </div>
+  <article class="doc doc--cert" id="doc"></article>
+
+  <script src="js/core.js"></script>
+  <script src="js/docs.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, api, fecha, edad, especie, SEXO } = HV;
+      await HV.init();
+      $("#back").innerHTML = `${icon("back")}Volver`;
+      $("#imprimir").innerHTML = `${icon("print")}Imprimir certificado`;
+      $("#imprimir").addEventListener("click", () => window.print());
+
+      const [{ vacuna: v, animal: a, tutor: t }, clinica] = await Promise.all([
+        api("GET", `/api/vacunas/${encodeURIComponent(HV.qs("id"))}/certificado`),
+        api("GET", "/api/clinica"),
+      ]).catch((e) => { $("#doc").innerHTML = `<div class="empty">${esc(e.message)}</div>`; throw e; });
+
+      const e = especie(a.especie);
+      const nro = `AR-${String(v.id).padStart(6, "0")}`;
+      document.title = `Certificado antirrábico — ${a.nombre}`;
+      $("#doc").innerHTML = `
+        ${Docs.cabecera(clinica, `<b>Certificado Nº ${nro}</b><br />Emitido el ${fecha(HV.hoy())}`)}
+        <div class="cert__seal">${icon("award")}</div>
+        <h1 class="doc__title" style="text-align:center;font-size:18px;margin-top:6px">Certificado de vacunación antirrábica</h1>
+        <p class="cert__text">El/la profesional que suscribe certifica que el animal cuyos datos se detallan fue vacunado contra la
+          <b>rabia</b> en la fecha indicada, conforme a la Ley Nacional 22.953 de lucha antirrábica y las normas de la jurisdicción.</p>
+
+        <h2 class="doc__title">Animal</h2>
+        <div class="doc__grid">
+          <div><b>Nombre:</b> ${esc(a.nombre)}</div>
+          <div><b>Especie / raza:</b> ${esc(e.nombre)}${a.raza ? " · " + esc(a.raza) : ""}</div>
+          <div><b>Sexo:</b> ${esc(SEXO[a.sexo])}${a.castrado ? " · castrado/a" : ""}</div>
+          <div><b>Edad:</b> ${esc(edad(a.fecha_nac))}${a.fecha_nac ? ` (nac. ${fecha(a.fecha_nac)})` : ""}</div>
+          <div><b>Color / pelaje:</b> ${esc(a.color || "—")}</div>
+          <div><b>Microchip:</b> ${esc(a.microchip || "—")}</div>
+          ${a.senas ? `<div style="grid-column:1/-1"><b>Señas particulares:</b> ${esc(a.senas)}</div>` : ""}
+        </div>
+
+        <h2 class="doc__title">Tutor / responsable</h2>
+        <div class="doc__grid">
+          <div><b>Nombre:</b> ${esc(t.apellido)}, ${esc(t.nombre)}</div>
+          <div><b>DNI / CUIT:</b> ${esc(t.dni)}</div>
+          <div><b>Domicilio:</b> ${esc([t.direccion, t.ciudad, t.provincia].filter((x) => x && x !== "—").join(", ") || "—")}</div>
+          <div><b>Teléfono:</b> ${esc(t.telefono || "—")}</div>
+        </div>
+
+        <h2 class="doc__title">Vacuna aplicada</h2>
+        <div class="cert__box">
+          <div><span>Fecha de aplicación</span><b>${fecha(v.fecha)}</b></div>
+          <div><span>Laboratorio / marca</span><b>${esc(v.laboratorio || "—")}</b></div>
+          <div><span>Lote / serie</span><b>${esc(v.lote || "—")}</b></div>
+          <div><span>Válida hasta</span><b>${v.proxima ? fecha(v.proxima) : "—"}</b></div>
+        </div>
+
+        <div class="doc__sign"><div>${v.usuario_id ? `<img class="doc__firma" src="/api/usuarios/${v.usuario_id}/documentos/firma" alt="" onerror="this.remove()" />` : ""}Dr/a. ${esc(v.autor || "")}<br />Médico/a veterinario/a · ${esc(v.autor_matricula || "Mat. —")}${v.autor_ente ? "<br />" + esc(v.autor_ente) : ""}<br />Firma y sello</div></div>
+        <p class="doc__foot">Revacunación anual obligatoria. Conserve este certificado: puede ser requerido para viajes, guarderías y controles sanitarios.</p>`;
+    })();
+  </script>
+</body>
+</html>

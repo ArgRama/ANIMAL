@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Mi usuario</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="pf">
+    <a class="back hidden" id="back" href="usuarios.html"></a>
+    <h1 class="pf__title" id="titulo">Mi usuario</h1>
+
+    <div class="pf__head">
+      <button class="pf__ava" type="button" id="foto" aria-label="Cambiar foto">
+        <span id="fotoImg"></span><span class="pf__cam" id="cam"></span>
+      </button>
+      <input type="file" accept="image/*" class="hidden" id="fotoInput" />
+      <button class="pf__reset" type="button" id="reset">Resetear mi contraseña</button>
+    </div>
+
+    <form id="fPerfil" novalidate>
+      <section class="pf__card">
+        <h2 class="pf__h">Datos personales</h2>
+        <div class="pf__grid">
+          <label class="pf__f"><span>Nombre</span><input name="nombre" required /></label>
+          <label class="pf__f"><span>Apellido</span><input name="apellido" required /></label>
+          <label class="pf__f"><span>DNI</span><input name="dni" inputmode="numeric" maxlength="10" /></label>
+          <label class="pf__f"><span>Fecha de nacimiento</span><input name="fecha_nac" type="date" /></label>
+          <label class="pf__f"><span>CUIT</span><input name="cuit" inputmode="numeric" maxlength="13" placeholder="Sin guiones" /></label>
+          <label class="pf__f"><span>Teléfono <span class="pf__flag" aria-hidden="true"></span><b>+54</b></span>
+            <input name="telefono" type="tel" placeholder="Ej.: 9 351 555 1234" /></label>
+          <label class="pf__f pf__f--full"><span>Email (con el que ingresás)</span><input name="email" type="email" required /></label>
+        </div>
+      </section>
+
+      <section class="pf__card" id="profesionales">
+        <h2 class="pf__h">Datos profesionales</h2>
+        <div class="pf__grid">
+          <div class="pf__f pf__f--full"><span>¿Qué tipo de matrícula tiene?</span>
+            <div class="pf__radios">
+              <label><input type="radio" name="tipo_matricula" value="nacional" />Matrícula Nacional</label>
+              <label><input type="radio" name="tipo_matricula" value="provincial" />Matrícula Provincial</label>
+            </div></div>
+          <label class="pf__f"><span id="lMatricula">Matrícula (MP)</span><input name="matricula_num" inputmode="numeric" /></label>
+          <label class="pf__f"><span>Colegio / ente de matriculación</span><input name="ente_matricula" list="dlEntes" placeholder="Ej.: Colegio de Veterinarios de Córdoba" />
+            <datalist id="dlEntes"></datalist></label>
+        </div>
+      </section>
+
+      <section class="pf__card">
+        <h2 class="pf__h">Datos de usuario ANIMAL</h2>
+        <div class="pf__grid">
+          <label class="pf__f"><span>Especialidad / área</span><input name="especialidad" list="dlEsp" placeholder="Ej.: Pequeños animales" />
+            <datalist id="dlEsp"></datalist></label>
+          <label class="pf__f"><span>Nivel de permiso</span><input id="rol" readonly tabindex="-1" /></label>
+          <label class="pf__f"><span>Veterinaria</span><input id="clinica" readonly tabindex="-1" /></label>
+          <label class="pf__f"><span>Usuario desde</span><input id="desde" readonly tabindex="-1" /></label>
+        </div>
+      </section>
+
+      <section class="pf__card">
+        <h2 class="pf__h">Geolocalización</h2>
+        <div class="pf__grid pf__grid--3">
+          <label class="pf__f"><span>País</span><input name="pais" /></label>
+          <label class="pf__f"><span>Provincia</span><input name="provincia" list="dlProv" />
+            <datalist id="dlProv"></datalist></label>
+          <label class="pf__f"><span>Ciudad</span><input name="ciudad" /></label>
+        </div>
+      </section>
+
+      <div class="form-error" role="alert" style="text-align:center"></div>
+      <div class="pf__save"><button class="pf__btn" type="submit">Guardar</button></div>
+    </form>
+
+    <section class="pf__docs">
+      <h2>Documento, título, matrícula y firma</h2>
+      <p>Adjuntá una foto de tu documento, título y matrícula habilitante, y tu firma electrónica.</p>
+      <button class="pf__docbtn" type="button" id="firmar">Firma electrónica · Mis documentos</button>
+      <div class="pf__tiles" id="tiles"></div>
+      <p class="pf__nota">Tu DNI, título y matrícula sólo los ven vos y el director. La firma se imprime en tus recetas, certificados y consentimientos.</p>
+    </section>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, $$, api, modal, close, toast, confirmar, ROLES, fecha } = HV;
+      const me = await HV.init({ roles: ["director", "veterinario", "recepcion"] });
+      const ID = Number(HV.qs("id")) || me.id;
+      const propio = ID === me.id;
+      const q = propio ? "" : `?id=${ID}`;
+      let U = null;
+
+      const PROVINCIAS = ["Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy",
+        "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquén", "Río Negro", "Salta", "San Juan", "San Luis", "Santa Cruz", "Santa Fe",
+        "Santiago del Estero", "Tierra del Fuego", "Tucumán"];
+      $("#dlProv").innerHTML = PROVINCIAS.map((p) => `<option value="${p}"></option>`).join("");
+      $("#dlEntes").innerHTML = PROVINCIAS.map((p) => `<option value="Colegio de Veterinarios de ${p}"></option>`).join("");
+      $("#dlEsp").innerHTML = ["Pequeños animales", "Grandes animales", "Animales exóticos", "Clínica general", "Cirugía", "Dermatología",
+        "Cardiología", "Diagnóstico por imágenes", "Anestesiología", "Producción animal", "Equinos", "Recepción / administración"]
+        .map((e) => `<option value="${e}"></option>`).join("");
+      $("#cam").innerHTML = icon("camera");
+
+      const DOCS = [["dni_frente", "DNI frente"], ["dni_dorso", "DNI dorso"], ["titulo", "Título"], ["matricula", "Matrícula"], ["firma", "Firma"]];
+      const urlDoc = (t) => `/api/usuarios/${ID}/documentos/${t}?v=${encodeURIComponent((U.documentos.find((d) => d.tipo === t) || {}).actualizado || "")}`;
+
+      async function cargar() {
+        try {
+          U = await api("GET", "/api/perfil" + q);
+        } catch (e) {
+          // Sin datos no se puede editar nada: se avisa en vez de mostrar el formulario vacío.
+          const viejo = /ruta no encontrada/i.test(e.message);
+          $("#fPerfil").classList.add("hidden");
+          $(".pf__docs").classList.add("hidden");
+          $(".pf__head").insertAdjacentHTML("afterend", `<div class="alert alert--danger" style="margin-bottom:18px">${icon("alert")}<span>
+            <b>No se pudo cargar el perfil.</b> ${viejo
+              ? "El servidor está corriendo una versión anterior de ANIMAL. Cerralo (Ctrl + C en la terminal) y volvé a iniciarlo con <b>npm.cmd start</b>."
+              : esc(e.message)}</span></div>`);
+          return;
+        }
+        document.title = propio ? "ANIMAL — Mi usuario" : `ANIMAL — ${U.apellido} ${U.nombre}`;
+        $("#titulo").textContent = propio ? "Mi usuario" : `Usuario: ${U.apellido} ${U.nombre}`;
+        if (!propio) { $("#back").classList.remove("hidden"); $("#back").innerHTML = `${icon("back")}Equipo y clínica`; }
+        $("#reset").textContent = propio ? "Resetear mi contraseña" : "Generar nueva contraseña";
+
+        const f = $("#fPerfil");
+        for (const k of ["nombre", "apellido", "dni", "fecha_nac", "cuit", "telefono", "email", "ente_matricula", "especialidad", "pais", "provincia", "ciudad"]) {
+          f[k].value = U[k] ?? "";
+        }
+        if (!U.pais) f.pais.value = "Argentina";
+        f.dni.readOnly = !U.editable_dni;
+        f.dni.title = U.editable_dni ? "" : "El DNI sólo lo corrige el director.";
+        // Matrícula: "MP 3310" -> tipo provincial + número 3310.
+        const m = /^(MN|MP)\s*(.*)$/i.exec(U.matricula || "");
+        const tipo = U.tipo_matricula || (m && m[1].toUpperCase() === "MN" ? "nacional" : "provincial");
+        f.querySelector(`[name=tipo_matricula][value=${tipo}]`).checked = true;
+        f.matricula_num.value = m ? m[2] : (U.matricula || "");
+        etiquetaMatricula();
+        $("#profesionales").classList.toggle("hidden", U.rol === "recepcion");
+        $("#rol").value = ROLES[U.rol];
+        $("#clinica").value = U.clinica;
+        $("#desde").value = fecha(U.creado);
+        pintarFoto();
+        pintarDocs();
+      }
+
+      function pintarFoto() {
+        $("#fotoImg").innerHTML = U.foto
+          ? `<img src="/api/usuarios/${ID}/foto?v=${encodeURIComponent(U.foto)}" alt="" />`
+          : `<span class="pf__ini">${esc((U.nombre[0] || "") + (U.apellido[0] || ""))}</span>`;
+      }
+
+      function pintarDocs() {
+        $("#tiles").innerHTML = DOCS.map(([t, l]) => {
+          const d = U.documentos.find((x) => x.tipo === t);
+          const cont = !d ? `<span class="pf__tile-vacio">${icon("plus")}Agregar</span>`
+            : d.mime === "application/pdf" ? `<span class="pf__tile-pdf">${icon("file")}PDF</span>`
+            : `<img src="${urlDoc(t)}" alt="${l}" />`;
+          return `<button type="button" class="pf__tile ${t === "firma" ? "pf__tile--firma" : ""}" data-doc="${t}">
+            <span class="pf__tile-img">${cont}</span><span class="pf__tile-l">${l}</span></button>`;
+        }).join("");
+        $$("[data-doc]").forEach((b) => b.addEventListener("click", () => abrirDoc(b.dataset.doc)));
+      }
+
+      const etiquetaMatricula = () => {
+        const nac = $("#fPerfil [name=tipo_matricula][value=nacional]").checked;
+        $("#lMatricula").textContent = nac ? "Matrícula (MN)" : "Matrícula (MP)";
+      };
+      $$("#fPerfil [name=tipo_matricula]").forEach((r) => r.addEventListener("change", etiquetaMatricula));
+
+      /* ---------- Guardar ---------- */
+      HV.onSubmit($("#fPerfil"), async (d) => {
+        const tipo = d.tipo_matricula || "provincial";
+        const num = (d.matricula_num || "").trim();
+        const body = { ...d, tipo_matricula: tipo, matricula: num ? `${tipo === "nacional" ? "MN" : "MP"} ${num}` : "" };
+        delete body.matricula_num;
+        if (U.rol === "recepcion") { delete body.matricula; delete body.tipo_matricula; delete body.ente_matricula; }
+        if (!U.editable_dni) delete body.dni;
+        await api("PUT", "/api/perfil" + q, body);
+        toast("Datos guardados", "ok");
+        if (propio) setTimeout(() => location.reload(), 600); // actualiza el nombre del encabezado
+        else cargar();
+      });
+
+      /* ---------- Contraseña ---------- */
+      $("#reset").addEventListener("click", async () => {
+        if (propio) return document.querySelector('[data-act="clave"]').click();
+        if (!(await confirmar(`¿Generar una nueva contraseña para ${U.nombre} ${U.apellido}? La actual deja de funcionar.`, { ok: "Generar" }))) return;
+        const r = await api("POST", `/api/usuarios/${ID}/clave`, {});
+        modal({ title: "Nueva contraseña", body: `<p style="margin:0 0 10px">Clave temporal para <b>${esc(U.email)}</b>:</p>
+          <div class="secret"><span>${esc(r.clave)}</span></div><div class="form-actions"><button class="btn" type="button" data-close>Listo</button></div>` });
+      });
+
+      /* ---------- Archivos: lectura y compresión ---------- */
+      const leer = (file) => new Promise((ok, mal) => { const rd = new FileReader(); rd.onload = () => ok(rd.result); rd.onerror = () => mal(new Error("No se pudo leer el archivo.")); rd.readAsDataURL(file); });
+      // Imágenes de celular: se reducen a 1600 px (JPEG) para que pesen poco.
+      function comprimir(file, lado = 1600, cuadrado = false) {
+        return new Promise((ok, mal) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width: w, height: h } = img, sx = 0, sy = 0, sw = w, sh = h;
+            if (cuadrado) { const l = Math.min(w, h); sx = (w - l) / 2; sy = (h - l) / 2; sw = sh = l; w = h = l; }
+            const k = Math.min(1, lado / Math.max(w, h));
+            const c = document.createElement("canvas");
+            c.width = Math.round(w * k); c.height = Math.round(h * k);
+            c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+            URL.revokeObjectURL(img.src);
+            ok(c.toDataURL("image/jpeg", 0.85));
+          };
+          img.onerror = () => mal(new Error("No se pudo leer la imagen."));
+          img.src = URL.createObjectURL(file);
+        });
+      }
+      const elegirArchivo = (accept) => new Promise((ok) => {
+        const i = document.createElement("input");
+        i.type = "file"; i.accept = accept;
+        i.addEventListener("change", () => ok(i.files[0] || null));
+        i.click();
+      });
+
+      /* ---------- Foto de perfil ---------- */
+      $("#foto").addEventListener("click", () => $("#fotoInput").click());
+      $("#fotoInput").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          await api("POST", "/api/perfil/foto" + q, { data: await comprimir(file, 480, true) });
+          toast("Foto actualizada", "ok");
+          if (propio) setTimeout(() => location.reload(), 500); else cargar();
+        } catch (ex) { toast(ex.message, "error"); }
+      });
+
+      /* ---------- Documentos ---------- */
+      async function subir(tipo, file) {
+        if (!file) return;
+        try {
+          const data = file.type === "application/pdf" ? await leer(file) : await comprimir(file);
+          await api("POST", `/api/perfil/documentos/${tipo}${q}`, { data });
+          toast("Documento guardado", "ok");
+          cargar();
+        } catch (ex) { toast(ex.message, "error"); }
+      }
+
+      async function abrirDoc(tipo) {
+        const [, etiqueta] = DOCS.find(([t]) => t === tipo);
+        const d = U.documentos.find((x) => x.tipo === tipo);
+        if (tipo === "firma") return firmar();
+        if (!d) return subir(tipo, await elegirArchivo("image/*,application/pdf"));
+        const m = modal({
+          title: etiqueta, wide: d.mime === "application/pdf",
+          body: `${d.mime === "application/pdf"
+              ? `<iframe src="${urlDoc(tipo)}" style="width:100%;height:60vh;border:1px solid var(--line);border-radius:12px"></iframe>`
+              : `<img src="${urlDoc(tipo)}" alt="${esc(etiqueta)}" style="width:100%;max-height:62vh;object-fit:contain;border-radius:12px;background:var(--line-2)" />`}
+            <p class="muted" style="font-size:12.5px;margin:10px 0 0">Actualizado el ${fecha(d.actualizado)}</p>
+            <div class="form-actions"><button class="btn btn--danger" type="button" data-quitar>${icon("trash")}Quitar</button>
+              <button class="btn" type="button" data-cambiar>${icon("upload")}Reemplazar</button></div>`,
+        });
+        $("[data-cambiar]", m).addEventListener("click", async () => { close(m); subir(tipo, await elegirArchivo("image/*,application/pdf")); });
+        $("[data-quitar]", m).addEventListener("click", async () => {
+          await api("DELETE", `/api/perfil/documentos/${tipo}${q}`); close(m); toast("Documento quitado"); cargar();
+        });
+      }
+
+      /* ---------- Firma: dibujarla o subir una imagen ---------- */
+      function firmar() {
+        const tiene = U.documentos.some((x) => x.tipo === "firma");
+        const m = modal({
+          title: "Firma electrónica",
+          body: `<p class="muted" style="margin:0 0 10px;font-size:13.5px">Firmá con el dedo o el mouse dentro del recuadro. Se imprime en tus recetas, certificados y consentimientos.</p>
+            ${tiene ? `<div class="pf__firma-actual"><span class="muted" style="font-size:12px">Firma actual</span><img src="${urlDoc("firma")}" alt="Firma actual" /></div>` : ""}
+            <canvas class="pf__pad" width="1200" height="420" aria-label="Recuadro para firmar"></canvas>
+            <div class="form-actions" style="justify-content:space-between">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn--ghost btn--sm" type="button" data-limpiar>Limpiar</button>
+                <button class="btn btn--plain btn--sm" type="button" data-subir>${icon("upload")}Subir imagen</button>
+                ${tiene ? `<button class="btn btn--plain btn--sm" type="button" data-quitar style="color:var(--red-600)">Quitar firma</button>` : ""}
+              </div>
+              <button class="btn btn--green" type="button" data-guardar>${icon("check")}Guardar firma</button></div>
+            <div class="pf__docs-mini">${DOCS.filter(([t]) => t !== "firma").map(([t, l]) => `<button type="button" class="chip" data-otro="${t}">${l}${U.documentos.some((x) => x.tipo === t) ? " ✓" : ""}</button>`).join("")}</div>`,
+        });
+        const cv = $("canvas", m), ctx = cv.getContext("2d");
+        ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#0B1B4F";
+        let dibujando = false, trazos = 0;
+        const pos = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * (cv.width / r.width), (e.clientY - r.top) * (cv.height / r.height)]; };
+        cv.addEventListener("pointerdown", (e) => { dibujando = true; trazos++; cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.moveTo(...pos(e)); });
+        cv.addEventListener("pointermove", (e) => { if (!dibujando) return; ctx.lineTo(...pos(e)); ctx.stroke(); });
+        ["pointerup", "pointercancel"].forEach((ev) => cv.addEventListener(ev, () => { dibujando = false; }));
+        $("[data-limpiar]", m).addEventListener("click", () => { ctx.clearRect(0, 0, cv.width, cv.height); trazos = 0; });
+        $("[data-guardar]", m).addEventListener("click", async () => {
+          if (!trazos) return toast("Dibujá tu firma primero", "error");
+          await api("POST", `/api/perfil/documentos/firma${q}`, { data: cv.toDataURL("image/png") });
+          close(m); toast("Firma guardada", "ok"); cargar();
+        });
+        $("[data-subir]", m).addEventListener("click", async () => {
+          const file = await elegirArchivo("image/*");
+          if (!file) return;
+          close(m);
+          try {
+            await api("POST", `/api/perfil/documentos/firma${q}`, { data: await leer(file).then((x) => file.size > 1.5e6 ? comprimir(file, 1200) : x) });
+            toast("Firma guardada", "ok"); cargar();
+          } catch (ex) { toast(ex.message, "error"); }
+        });
+        $("[data-quitar]", m)?.addEventListener("click", async () => {
+          await api("DELETE", `/api/perfil/documentos/firma${q}`); close(m); toast("Firma quitada"); cargar();
+        });
+        $$("[data-otro]", m).forEach((b) => b.addEventListener("click", () => { close(m); abrirDoc(b.dataset.otro); }));
+      }
+      $("#firmar").addEventListener("click", firmar);
+
+      cargar();
+    })();
+  </script>
+</body>
+</html>

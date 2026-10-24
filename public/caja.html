@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Caja y cobros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page">
+    <a class="back" href="index.html" id="back"></a>
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Caja y cobros</h1>
+        <p class="page-sub" id="sub"></p>
+      </div>
+      <button class="btn btn--green" type="button" id="nuevo"></button>
+    </div>
+
+    <section class="panel">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between">
+        <div class="seg" id="periodo">
+          <button type="button" data-p="hoy" class="is-on">Hoy</button>
+          <button type="button" data-p="ayer">Ayer</button>
+          <button type="button" data-p="semana">Esta semana</button>
+          <button type="button" data-p="mes">Este mes</button>
+        </div>
+        <form id="fRango" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <label class="field"><span>Desde</span><input name="desde" type="date" /></label>
+          <label class="field"><span>Hasta</span><input name="hasta" type="date" /></label>
+          <button class="btn btn--sm" style="height:44px">Ver</button>
+        </form>
+      </div>
+    </section>
+
+    <div class="cols cols--3" id="kpis" style="margin:18px 0"></div>
+
+    <div class="cols cols--side">
+      <section class="panel">
+        <div class="panel__head"><h2 class="panel__title" id="tIngresos"></h2></div>
+        <div id="ingresos"></div>
+        <div id="otros"></div>
+      </section>
+      <aside>
+        <section class="panel">
+          <div class="panel__head"><h2 class="panel__title" id="tMedios"></h2></div>
+          <div id="medios"></div>
+        </section>
+        <section class="panel">
+          <div class="panel__head"><h2 class="panel__title" id="tDeudores"></h2></div>
+          <div class="list" id="deudores"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/cobros.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, $$, api, avatar, fecha, fechaHora, pesos, MEDIOS, modal, whatsapp } = HV;
+      const me = await HV.init({ roles: ["director", "veterinario", "recepcion"] });
+      $("#back").innerHTML = `${icon("back")}Inicio`;
+      $("#nuevo").innerHTML = `${icon("plus")}Registrar cobro`;
+      $("#tIngresos").innerHTML = `${icon("cash")}Cobrado en el período`;
+      $("#tMedios").innerHTML = `${icon("chart")}Por medio de pago`;
+      $("#tDeudores").innerHTML = `${icon("alert")}Cuentas pendientes`;
+
+      const hoy = HV.hoy();
+      const PERIODOS = {
+        hoy: () => [hoy, hoy],
+        ayer: () => [HV.sumarDias(hoy, -1), HV.sumarDias(hoy, -1)],
+        semana: () => { const d = new Date().getDay(); const l = HV.sumarDias(hoy, d === 0 ? -6 : 1 - d); return [l, hoy]; },
+        mes: () => [hoy.slice(0, 8) + "01", hoy],
+      };
+      let [desde, hasta] = PERIODOS.hoy();
+      let C = null;
+
+      async function cargar() {
+        C = await api("GET", `/api/caja?desde=${desde}&hasta=${hasta}`);
+        $("#fRango [name=desde]").value = desde;
+        $("#fRango [name=hasta]").value = hasta;
+        $("#sub").textContent = desde === hasta ? `Movimientos del ${HV.fechaLarga(desde)}` : `Del ${fecha(desde)} al ${fecha(hasta)}`;
+        render();
+      }
+
+      const puedeAnular = (c) => me.rol === "director" || c.usuario_id === me.id;
+
+      function fila(c, { pagar = false } = {}) {
+        return `<div class="list__item">
+          ${avatar(c.especie || "otro", "ava--sm", c.foto)}
+          <a class="list__main" href="${c.animal_id ? `animal.html?id=${c.animal_id}` : "#"}">
+            <span class="list__title">${esc(c.concepto)}</span>
+            <span class="list__sub">${esc(c.animal ? c.animal + " · " : "")}${esc(c.tutor)} · ${fechaHora(c.pagado_en || c.fecha)}${c.autor ? " · " + esc(c.autor) : ""}</span>
+            ${c.notas ? `<span class="list__sub">${esc(c.notas)}</span>` : ""}</a>
+          ${Cobros.tagEstado(c)}
+          <span class="monto ${c.estado === "anulado" ? "monto--anulado" : c.estado === "pendiente" ? "monto--neg" : ""}">${pesos(c.monto)}</span>
+          ${pagar && c.estado === "pendiente" ? `<button class="btn btn--sm btn--green" data-pagar="${c.id}">Cobrar</button>` : ""}
+          ${c.estado !== "anulado" && puedeAnular(c) ? `<button class="icon-btn icon-btn--danger" data-anular="${c.id}" title="Anular" aria-label="Anular">${icon("x")}</button>` : ""}
+        </div>`;
+      }
+
+      function render() {
+        const cargos = C.cargos.reduce((s, c) => s + c.monto, 0);
+        const deuda = C.deudores.reduce((s, d) => s + d.saldo, 0);
+        $("#kpis").innerHTML = [
+          ["Cobrado", pesos(C.total), `${C.ingresos.length} cobro${C.ingresos.length === 1 ? "" : "s"}`, "var(--green-600)"],
+          ["Cargado a cuenta", pesos(cargos), `${C.cargos.length} en el período`, "var(--amber-600)"],
+          ["Deuda total de tutores", pesos(deuda), `${C.deudores.length} cuenta${C.deudores.length === 1 ? "" : "s"} pendiente${C.deudores.length === 1 ? "" : "s"}`, "var(--blue-700)"],
+        ].map(([l, v, s, col]) => `<section class="panel" style="margin:0"><div class="stat"><span class="stat__l">${l}</span>
+          <span class="stat__n" style="color:${col}">${v}</span><span class="stat__l" style="font-weight:400">${s}</span></div></section>`).join("");
+
+        const todos = [...C.ingresos, ...C.cargos, ...C.anulados];
+        $("#ingresos").innerHTML = C.ingresos.length ? `<div class="list">${C.ingresos.map((c) => fila(c)).join("")}</div>`
+          : `<div class="empty">${icon("cash")}No hay cobros en el período.</div>`;
+        $("#otros").innerHTML = [
+          C.cargos.length ? `<h3 class="panel__title" style="font-size:14.5px;margin:22px 0 6px">${icon("clock")}Cargado a cuenta en el período</h3><div class="list">${C.cargos.map((c) => fila(c, { pagar: true })).join("")}</div>` : "",
+          C.anulados.length ? `<h3 class="panel__title" style="font-size:14.5px;margin:22px 0 6px;color:var(--muted)">${icon("x")}Anulados</h3><div class="list">${C.anulados.map((c) => fila(c)).join("")}</div>` : "",
+        ].join("");
+
+        const max = Math.max(...Object.values(C.por_medio), 1);
+        $("#medios").innerHTML = Object.keys(C.por_medio).length ? `<div class="bars">${Object.entries(C.por_medio).sort((a, b) => b[1] - a[1]).map(([m, v]) => `
+          <div class="bar" style="grid-template-columns:110px 1fr auto"><span>${esc(MEDIOS[m] || m)}</span>
+            <span class="bar__track"><span class="bar__fill" style="display:block;width:${(v / max) * 100}%;background:var(--card-green)"></span></span>
+            <span class="bar__n">${pesos(v)}</span></div>`).join("")}</div>`
+          : `<div class="empty">${icon("chart")}Sin cobros.</div>`;
+
+        $("#deudores").innerHTML = C.deudores.length ? C.deudores.map((d) => {
+          const wa = whatsapp(d.telefono, `Hola, le escribimos de la veterinaria: tiene un saldo pendiente de ${pesos(d.saldo)}. ¡Gracias!`);
+          return `<div class="list__item">
+            <button class="list__main" type="button" data-cuenta="${d.tutor_id}" style="all:unset;flex:1;min-width:0;cursor:pointer">
+              <span class="list__title">${esc(d.tutor)}</span><span class="list__sub">${d.cantidad} cargo${d.cantidad > 1 ? "s" : ""} · desde ${fecha(d.desde)}</span></button>
+            <span class="monto monto--neg">${pesos(d.saldo)}</span>
+            ${wa ? `<a class="icon-btn" href="${wa}" target="_blank" rel="noopener" title="Avisar por WhatsApp" aria-label="Avisar por WhatsApp">${icon("msg")}</a>` : ""}</div>`;
+        }).join("") : `<div class="empty">${icon("check")}No hay deudas.</div>`;
+
+        $$("[data-pagar]").forEach((b) => b.addEventListener("click", () => Cobros.pagar(todos.find((c) => c.id === Number(b.dataset.pagar)), cargar)));
+        $$("[data-anular]").forEach((b) => b.addEventListener("click", () => Cobros.anular(todos.find((c) => c.id === Number(b.dataset.anular)), cargar)));
+        $$("[data-cuenta]").forEach((b) => b.addEventListener("click", () => verCuenta(Number(b.dataset.cuenta))));
+      }
+
+      // Cuenta del tutor con sus pendientes, para cobrarlos uno por uno.
+      async function verCuenta(tutorId) {
+        const cta = await api("GET", `/api/tutores/${tutorId}/cuenta`);
+        const pend = cta.movimientos.filter((c) => c.estado === "pendiente");
+        const m = modal({
+          title: `Cuenta de ${pend[0]?.tutor || "tutor"}`,
+          body: `<p style="margin:0 0 10px">Saldo pendiente: <b class="monto monto--neg">${pesos(cta.saldo)}</b></p>
+            <div class="list">${pend.map((c) => fila(c, { pagar: true })).join("") || `<div class="empty">Sin pendientes.</div>`}</div>
+            <div class="form-actions"><button class="btn" type="button" data-close>Listo</button></div>`,
+        });
+        $$("[data-pagar]", m).forEach((b) => b.addEventListener("click", () => {
+          HV.close(m);
+          Cobros.pagar(pend.find((c) => c.id === Number(b.dataset.pagar)), cargar);
+        }));
+        $$("[data-anular]", m).forEach((b) => b.addEventListener("click", () => {
+          HV.close(m);
+          Cobros.anular(pend.find((c) => c.id === Number(b.dataset.anular)), cargar);
+        }));
+      }
+
+      $("#periodo").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-p]");
+        if (!b) return;
+        [desde, hasta] = PERIODOS[b.dataset.p]();
+        $$("#periodo button").forEach((x) => x.classList.toggle("is-on", x === b));
+        cargar();
+      });
+      $("#fRango").addEventListener("submit", (e) => {
+        e.preventDefault();
+        desde = e.target.desde.value || hoy;
+        hasta = e.target.hasta.value || desde;
+        if (hasta < desde) [desde, hasta] = [hasta, desde];
+        $$("#periodo button").forEach((x) => x.classList.remove("is-on"));
+        cargar();
+      });
+      $("#nuevo").addEventListener("click", () => Cobros.nuevo({ alGuardar: cargar }));
+      cargar();
+    })();
+  </script>
+</body>
+</html>

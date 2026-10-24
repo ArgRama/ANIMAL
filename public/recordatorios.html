@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Recordatorios</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page page--narrow">
+    <a class="back" href="index.html" id="back"></a>
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Recordatorios</h1>
+        <p class="page-sub">Vacunas, desparasitaciones y controles para avisar a los tutores.</p>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+        <div class="seg" id="tipo">
+          <button type="button" data-v="" class="is-on">Todos</button>
+          <button type="button" data-v="vacuna">Vacunas</button>
+          <button type="button" data-v="desparasitacion">Desparasitación</button>
+          <button type="button" data-v="control">Controles</button>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <label class="check"><input type="checkbox" id="ocultar" checked />Ocultar avisados</label>
+          <label class="field"><select id="dias" aria-label="Período">
+            <option value="7">Próximos 7 días</option><option value="30" selected>Próximos 30 días</option>
+            <option value="60">Próximos 60 días</option><option value="90">Próximos 90 días</option></select></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel"><div class="panel__head"><h2 class="panel__title" id="tVencidos"></h2></div><div class="list" id="vencidos"></div></section>
+    <section class="panel"><div class="panel__head"><h2 class="panel__title" id="tProximos"></h2></div><div class="list" id="proximos"></div></section>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script>
+    (async () => {
+      const { icon, esc, $, $$, api, avatar, fecha, toast, whatsapp } = HV;
+      await HV.init({ roles: ["director", "veterinario", "recepcion"] });
+      $("#back").innerHTML = `${icon("back")}Inicio`;
+
+      const ICONO = { vacuna: "syringe", desparasitacion: "bug", control: "stetho" };
+      let datos = null, tipo = "";
+
+      async function cargar() {
+        datos = await api("GET", "/api/recordatorios?dias=" + $("#dias").value);
+        render();
+      }
+
+      function mensaje(x) {
+        const que = x.tipo === "control" ? "el control pendiente" : x.detalle.replace(/ \(sin aplicar\)$/, "");
+        const cuando = !x.fecha ? "" : x.vencido ? ` (venció el ${fecha(x.fecha)})` : ` para el ${fecha(x.fecha)}`;
+        return `Hola ${x.tutor_nombre}, le escribimos de la veterinaria para recordarle que ${x.animal} tiene ${que.toLowerCase()}${cuando}. ¿Le reservamos un turno?`;
+      }
+
+      function fila(x) {
+        const wa = whatsapp(x.telefono, mensaje(x));
+        return `<div class="list__item" ${x.avisado ? 'style="opacity:.6"' : ""}>
+          ${avatar(x.especie, "ava--sm", x.foto)}
+          <a class="list__main" href="animal.html?id=${x.animal_id}">
+            <span class="list__title">${esc(x.animal)} <span class="muted" style="font-weight:400">· ${esc(x.tutor)}</span></span>
+            <span class="list__sub">${icon(ICONO[x.tipo], "ico")} ${esc(x.detalle)}${x.telefono ? " · " + esc(x.telefono) : " · sin teléfono"}</span></a>
+          <span class="tag tag--${!x.fecha || x.vencido ? "danger" : "warn"}">${x.fecha ? fecha(x.fecha) : "Sin aplicar"}</span>
+          ${wa ? `<a class="icon-btn" href="${wa}" target="_blank" rel="noopener" data-wa="${esc(x.clave)}" title="Avisar por WhatsApp" aria-label="Avisar por WhatsApp">${icon("msg")}</a>` : ""}
+          <label class="check" title="Marcar como avisado"><input type="checkbox" data-aviso="${esc(x.clave)}" ${x.avisado ? "checked" : ""} /><span class="muted" style="font-size:12.5px">Avisado</span></label>
+        </div>`;
+      }
+
+      function render() {
+        const ocultar = $("#ocultar").checked;
+        const items = datos.items.filter((x) => (!tipo || x.tipo === tipo) && (!ocultar || !x.avisado));
+        const venc = items.filter((x) => x.vencido), prox = items.filter((x) => !x.vencido);
+        $("#tVencidos").innerHTML = `${icon("alert")}Vencidos o sin aplicar <span class="panel__count">${venc.length}</span>`;
+        $("#tProximos").innerHTML = `${icon("calendar")}Próximos <span class="panel__count">${prox.length}</span>`;
+        const vacio = (t) => `<div class="empty">${icon("check")}${t}</div>`;
+        $("#vencidos").innerHTML = venc.length ? venc.map(fila).join("") : vacio("Nada vencido. ¡Excelente!");
+        $("#proximos").innerHTML = prox.length ? prox.map(fila).join("") : vacio("Sin recordatorios en el período.");
+
+        const marcar = async (clave, avisado) => {
+          await api("POST", "/api/avisos", { clave, avisado });
+          const it = datos.items.find((x) => x.clave === clave);
+          if (it) it.avisado = avisado ? new Date().toISOString() : null;
+        };
+        $$("[data-aviso]").forEach((c) => c.addEventListener("change", async () => {
+          try { await marcar(c.dataset.aviso, c.checked); toast(c.checked ? "Marcado como avisado" : "Desmarcado", "ok"); render(); }
+          catch (e) { toast(e.message, "error"); }
+        }));
+        // Al abrir WhatsApp se marca como avisado.
+        $$("[data-wa]").forEach((a) => a.addEventListener("click", () => setTimeout(async () => { await marcar(a.dataset.wa, true).catch(() => {}); render(); }, 300)));
+      }
+
+      $("#tipo").addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-v]");
+        if (!b) return;
+        tipo = b.dataset.v;
+        $$("#tipo button").forEach((x) => x.classList.toggle("is-on", x === b));
+        render();
+      });
+      $("#ocultar").addEventListener("change", render);
+      $("#dias").addEventListener("change", cargar);
+      cargar();
+    })();
+  </script>
+</body>
+</html>

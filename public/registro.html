@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ANIMAL — Nuevo paciente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#1638B8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/iconos/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/iconos/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="ANIMAL" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="page page--narrow">
+    <a class="back" href="buscar.html" id="back"></a>
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Nuevo paciente</h1>
+        <p class="page-sub">Primero el tutor (responsable), después el animal.</p>
+      </div>
+    </div>
+
+    <div class="steps" aria-hidden="true">
+      <span class="step is-on" id="st1"><span class="step__n">1</span>Tutor</span>
+      <span class="step" id="st2"><span class="step__n">2</span>Especie</span>
+      <span class="step" id="st3"><span class="step__n">3</span>Datos del animal</span>
+    </div>
+
+    <!-- Paso 1: tutor -->
+    <section class="panel" id="pTutor">
+      <div class="panel__head"><h2 class="panel__title" id="tTutor"></h2></div>
+      <div id="tutorBody"></div>
+    </section>
+
+    <!-- Paso 2 y 3: animal -->
+    <section class="panel hidden" id="pAnimal">
+      <div class="panel__head"><h2 class="panel__title" id="tEspecie"></h2></div>
+      <div class="species" id="species"></div>
+
+      <form id="fAnimal" class="hidden" style="margin-top:22px;padding-top:20px;border-top:1px solid var(--line-2)" novalidate>
+        <div id="animalFields"></div>
+        <div class="form-error" role="alert"></div>
+        <div class="form-actions">
+          <a class="btn btn--ghost" href="buscar.html">Cancelar</a>
+          <button class="btn btn--green" type="submit" id="guardar"></button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/animal-form.js"></script>
+  <script src="js/registro.js"></script>
+</body>
+</html>
